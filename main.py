@@ -6,6 +6,7 @@ import time
 import wmi
 
 import requests
+from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -14,7 +15,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 # ==========================================
 URL = "https://mangaplus.shueisha.co.jp/viewer/5000869?timestamp=1762770081325"
-BASE_PATH = r"C:\Users\Lucas Alves\Downloads"
+BASE_PATH = str(Path.home / "Downloads")
 # FOLDER_NAME = "Chainsaw Man 219"
 # FOLDER_NAME = "One Piece 1165"
 FOLDER_NAME = "Jujutsu Kaisen Modulo 10"
@@ -100,7 +101,6 @@ def baixar_imagens_blob(url: str, base_path: str, folder_name: str):
         By.CSS_SELECTOR, "p[class^='Viewer-module_pageNumber_'] span"
     )
     text = page_number_p.get_attribute("textContent")
-    # total_pages = int(text.split("/")[-1].strip()) - 3
     total_pages = int(text.split("/")[-1].strip())
 
     scroll_until_all_images_loaded(driver, total_pages)
@@ -169,11 +169,11 @@ def baixar_imagens_blob(url: str, base_path: str, folder_name: str):
     caminho_destino_final = os.path.join(caminho_destino_pasta, f"{folder_name}.mobi")
 
     if not os.path.isdir(caminho_destino_pasta):
-        print("Kindle nao conectado ao computador")
+        print("❌ Kindle nao conectado ao computador")
         return
 
     if not os.path.exists(caminho_origem):
-        print("Erro: falhou ao converter para arquivo mobi")
+        print("❌ Erro: falhou ao converter para arquivo mobi")
         raise
 
     try:
