@@ -3,10 +3,11 @@ import os
 import shutil
 import subprocess
 import time
-import wmi
+from typing import Optional
 
 import requests
-from pathlib import Path
+import wmi
+from PIL import Image
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -14,11 +15,14 @@ from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 
 # ==========================================
-URL = "https://mangaplus.shueisha.co.jp/viewer/5000869?timestamp=1762770081325"
-BASE_PATH = str(Path.home / "Downloads")
-# FOLDER_NAME = "Chainsaw Man 219"
-# FOLDER_NAME = "One Piece 1165"
-FOLDER_NAME = "Jujutsu Kaisen Modulo 10"
+URL = "https://mangaplus.shueisha.co.jp/viewer/5000866"
+BASE_PATH = r"C:\Users\Lucas Alves\Downloads"
+FOLDER_NAME = "Chainsaw Man 222"
+AUTHOR = "Tatsuki Fujimoto"
+# FOLDER_NAME = "One Piece 1167"
+# AUTHOR = "Eichiro Oda"
+# FOLDER_NAME = "Jujutsu Kaisen Modulo 13"
+# AUTHOR = "Gege Akutami"
 # ==========================================
 
 
@@ -39,7 +43,7 @@ def find_kindle_letter(kindle_name):
 
         for drive in c.Win32_LogicalDisk():
             if drive.VolumeName and drive.VolumeName.lower() == kindle_name.lower():
-                return drive.DeviceID
+                return drive
 
     except Exception as e:
         print(f"Erro ao tentar acessar o WMI: {e}")
@@ -54,7 +58,7 @@ def scroll_until_all_images_loaded(driver, total_pages):
     max_stable_scrolls = 5
 
     while True:
-        imagens = driver.find_elements(By.CSS_SELECTOR, "img.zao-image")
+        imagens = driver.find_elements(By.CLASS_NAME, "zao-pages-container")
         current_count = len(imagens)
         print(f"Imagens carregadas: {current_count} / {total_pages}")
 
@@ -81,6 +85,48 @@ def scroll_until_all_images_loaded(driver, total_pages):
     print("✅ Rolagem completa")
 
 
+def download_img(driver, img, src, file_name, idx):
+    js_blob_to_base64 = """
+    const img = arguments[0];
+    const callback = arguments[1];
+
+    try {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const dataURL = canvas.toDataURL('image/png');
+    callback(dataURL);
+    } catch (e) {
+    callback(null);
+    }
+    """
+
+    if src.startswith("blob:"):
+        # execute_async_script espera callback ser chamado
+        data_url = driver.execute_async_script(js_blob_to_base64, img)
+        if data_url is None:
+            print(f"⚠️ {idx:02}.png não pôde ser baixada do blob.")
+            return
+        header, encoded = data_url.split(",", 1)
+        data = base64.b64decode(encoded)
+        with open(file_name, "wb") as f:
+            f.write(data)
+        print(f"📥 {idx:02}.png baixada do blob.")
+    elif src.startswith("data:image"):
+        header, encoded = src.split(",", 1)
+        data = base64.b64decode(encoded)
+        with open(file_name, "wb") as f:
+            f.write(data)
+        print(f"💾 {idx:02}.png salva de data URL.")
+    else:
+        img_data = requests.get(src).content
+        with open(file_name, "wb") as f:
+            f.write(img_data)
+        print(f"🌐 {idx:02}.png baixada de URL direta.")
+
+
 def baixar_imagens_blob(url: str, base_path: str, folder_name: str):
     pasta_destino = os.path.join(base_path, folder_name)
     os.makedirs(pasta_destino, exist_ok=True)
@@ -105,58 +151,40 @@ def baixar_imagens_blob(url: str, base_path: str, folder_name: str):
 
     scroll_until_all_images_loaded(driver, total_pages)
 
-    imagens = driver.find_elements(By.CSS_SELECTOR, "img.zao-image")
+    fathers = driver.find_elements(
+        By.XPATH,
+        "//div[@class='zao-pages-container'][.//div[@class='zao-image-container']]",
+    )
 
-    if not imagens:
+    if not fathers or len(fathers) == 0:
         print("⚠️ Nenhuma imagem encontrada.")
         driver.quit()
         return
 
-    # ------------------------------------------------------------------- ChatGPT fez essa parte aqui -------------------------------------------------------------------
-    js_blob_to_base64 = """
-    const img = arguments[0];
-    const callback = arguments[1];
-
-    try {
-    const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-    const dataURL = canvas.toDataURL('image/png');
-    callback(dataURL);
-    } catch (e) {
-    callback(null);
-    }
-    """
-
-    for idx, img in enumerate(imagens, start=1):
-        src = img.get_attribute("src")
-        nome_arquivo = os.path.join(pasta_destino, f"{idx:02}.png")
-
-        if src.startswith("blob:"):
-            # execute_async_script espera callback ser chamado
-            data_url = driver.execute_async_script(js_blob_to_base64, img)
-            if data_url is None:
-                print(f"⚠️ {idx:02}.png não pôde ser baixada do blob.")
-                continue
-            header, encoded = data_url.split(",", 1)
-            data = base64.b64decode(encoded)
-            with open(nome_arquivo, "wb") as f:
-                f.write(data)
-            print(f"📥 {idx:02}.png baixada do blob.")
-        elif src.startswith("data:image"):
-            header, encoded = src.split(",", 1)
-            data = base64.b64decode(encoded)
-            with open(nome_arquivo, "wb") as f:
-                f.write(data)
-            print(f"💾 {idx:02}.png salva de data URL.")
+    for index, father in enumerate(fathers, start=1):
+        children = father.find_elements(By.CSS_SELECTOR, ".zao-page")
+        if len(children) == 1:
+            file_name = os.path.join(pasta_destino, f"{index:02}.png")
+            img = children[0].find_element(
+                By.CSS_SELECTOR, ".zao-image-container img.zao-image"
+            )
+            src = img.get_attribute("src")
+            download_img(driver, img, src, file_name, index)
         else:
-            img_data = requests.get(src).content
-            with open(nome_arquivo, "wb") as f:
-                f.write(img_data)
-            print(f"🌐 {idx:02}.png baixada de URL direta.")
-    # ------------------------------------------------------------------- ChatGPT fez essa parte aqui -------------------------------------------------------------------
+            sub_folder = os.path.join(pasta_destino, f"{index:02}")
+            os.makedirs(sub_folder, exist_ok=True)
+            for new_index, sibling in enumerate(children, start=1):
+                file_name = os.path.join(sub_folder, f"{new_index:02}.png")
+                img = sibling.find_element(
+                    By.CSS_SELECTOR, ".zao-image-container img.zao-image"
+                )
+                src = img.get_attribute("src")
+                download_img(driver, img, src, file_name, new_index)
+            join_images_horizontally(
+                sub_folder,
+                output_folder=pasta_destino,
+                output_filename=f"{index:02}.png",
+            )
 
     driver.quit()
     print("✅ Todas as imagens foram baixadas com sucesso!")
@@ -164,43 +192,84 @@ def baixar_imagens_blob(url: str, base_path: str, folder_name: str):
     shutil.rmtree(pasta_destino)
 
     kindle = find_kindle_letter("Kindle")
-    caminho_origem = os.path.join(base_path, f"{folder_name}.mobi")
-    caminho_destino_pasta = os.path.join(kindle, "documents")
-    caminho_destino_final = os.path.join(caminho_destino_pasta, f"{folder_name}.mobi")
+    if kindle:
+        kindle_letter = kindle.DeviceID
+        caminho_origem = os.path.join(base_path, f"{folder_name}.mobi")
+        caminho_destino_pasta = os.path.join(kindle_letter, "documents")
+        caminho_destino_final = os.path.join(
+            caminho_destino_pasta, f"{folder_name}.mobi"
+        )
 
-    if not os.path.isdir(caminho_destino_pasta):
-        print("❌ Kindle nao conectado ao computador")
-        return
+        if not os.path.exists(caminho_origem):
+            print("❌ Erro: falhou ao converter para arquivo mobi")
+            raise
 
-    if not os.path.exists(caminho_origem):
-        print("❌ Erro: falhou ao converter para arquivo mobi")
-        raise
+        try:
+            shutil.move(caminho_origem, caminho_destino_final)
+            print(
+                f"✅ Sucesso! O arquivo '{folder_name}.mobi' foi movido para: {caminho_destino_final}"
+            )
+
+        except Exception as e:
+            print(f"❌ Erro ao mover o arquivo: {e}")
+            raise
+
+        try:
+            kindle.Stop()
+        except Exception as e:
+            print(f"❌ Erro ao desmontar kinlde: {e}")
+            raise
+
+
+def join_images_horizontally(
+    folder_path, output_folder: Optional[str], output_filename
+):
+    image_files = [
+        os.path.join(folder_path, f)
+        for f in os.listdir(folder_path)
+        if f.endswith((".png", ".jpg", ".jpeg"))
+    ]
+
+    image_files.sort(reverse=True)
 
     try:
-        shutil.move(caminho_origem, caminho_destino_final)
-        print(
-            f"✅ Sucesso! O arquivo '{folder_name}.mobi' foi movido para: {caminho_destino_final}"
-        )
-        return True
-
+        images = [Image.open(x) for x in image_files]
     except Exception as e:
-        print(f"❌ Erro ao mover o arquivo: {e}")
-        return False
+        print(f"Erro ao abrir imagens: {e}")
+        return
+
+    widths, heights = zip(*(i.size for i in images))
+
+    total_width = sum(widths)
+    max_height = max(heights)
+
+    new_im = Image.new("RGB", (total_width, max_height))
+
+    x_offset = 0
+    for im in images:
+        new_im.paste(im, (x_offset, 0))
+        x_offset += im.size[0]
+
+    output_path = os.path.join((output_folder or folder_path), output_filename)
+    new_im.save(output_path)
+    shutil.rmtree(folder_path)
 
 
 def generate_mobi(folder_path: str):
     subprocess.call(
         [
             "kcc",
+            "-p",
             "K11",
             folder_path,
             "-m",
             "-u",
-            "-s",
-            "-c",
-            "2",
             "-r",
             "1",
+            "-c",
+            "2",
+            "-a",
+            AUTHOR,
             "-f",
             "MOBI",
         ]
