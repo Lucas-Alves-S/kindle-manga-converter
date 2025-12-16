@@ -1,12 +1,14 @@
 import base64
 import os
+import platform
 import shutil
 import subprocess
 import time
+from pathlib import Path
 from typing import Optional
 
 import requests
-import wmi
+
 from PIL import Image
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -15,14 +17,14 @@ from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 
 # ==========================================
-URL = "https://mangaplus.shueisha.co.jp/viewer/5000866"
-BASE_PATH = r"C:\Users\Lucas Alves\Downloads"
-FOLDER_NAME = "Chainsaw Man 222"
-AUTHOR = "Tatsuki Fujimoto"
+URL = "https://mangaplus.shueisha.co.jp/viewer/5000910"
+BASE_PATH = Path.home() / "Downloads"
+# FOLDER_NAME = "Chainsaw Man 222"
+# AUTHOR = "Tatsuki Fujimoto"
 # FOLDER_NAME = "One Piece 1167"
 # AUTHOR = "Eichiro Oda"
-# FOLDER_NAME = "Jujutsu Kaisen Modulo 13"
-# AUTHOR = "Gege Akutami"
+FOLDER_NAME = "Jujutsu Kaisen Modulo 15"
+AUTHOR = "Gege Akutami"
 # ==========================================
 
 
@@ -39,6 +41,8 @@ def total_pages_loaded(driver):
 
 def find_kindle_letter(kindle_name):
     try:
+        import wmi
+
         c = wmi.WMI()
 
         for drive in c.Win32_LogicalDisk():
@@ -132,7 +136,7 @@ def baixar_imagens_blob(url: str, base_path: str, folder_name: str):
     os.makedirs(pasta_destino, exist_ok=True)
 
     options = webdriver.FirefoxOptions()
-    options.add_argument("--headless")
+    # options.add_argument("--headless")
     service = Service()
     driver = webdriver.Firefox(service=service, options=options)
 
@@ -149,7 +153,7 @@ def baixar_imagens_blob(url: str, base_path: str, folder_name: str):
     text = page_number_p.get_attribute("textContent")
     total_pages = int(text.split("/")[-1].strip())
 
-    scroll_until_all_images_loaded(driver, total_pages)
+    scroll_until_all_images_loaded(driver, total_pages - 4)
 
     fathers = driver.find_elements(
         By.XPATH,
@@ -188,37 +192,38 @@ def baixar_imagens_blob(url: str, base_path: str, folder_name: str):
 
     driver.quit()
     print("✅ Todas as imagens foram baixadas com sucesso!")
-    generate_mobi(pasta_destino)
-    shutil.rmtree(pasta_destino)
 
-    kindle = find_kindle_letter("Kindle")
-    if kindle:
-        kindle_letter = kindle.DeviceID
-        caminho_origem = os.path.join(base_path, f"{folder_name}.mobi")
-        caminho_destino_pasta = os.path.join(kindle_letter, "documents")
-        caminho_destino_final = os.path.join(
-            caminho_destino_pasta, f"{folder_name}.mobi"
-        )
-
-        if not os.path.exists(caminho_origem):
-            print("❌ Erro: falhou ao converter para arquivo mobi")
-            raise
-
-        try:
-            shutil.move(caminho_origem, caminho_destino_final)
-            print(
-                f"✅ Sucesso! O arquivo '{folder_name}.mobi' foi movido para: {caminho_destino_final}"
+    if platform.system() == "Windows":
+        generate_mobi(pasta_destino)
+        shutil.rmtree(pasta_destino)
+        kindle = find_kindle_letter("Kindle")
+        if kindle:
+            kindle_letter = kindle.DeviceID
+            caminho_origem = os.path.join(base_path, f"{folder_name}.mobi")
+            caminho_destino_pasta = os.path.join(kindle_letter, "documents")
+            caminho_destino_final = os.path.join(
+                caminho_destino_pasta, f"{folder_name}.mobi"
             )
 
-        except Exception as e:
-            print(f"❌ Erro ao mover o arquivo: {e}")
-            raise
+            if not os.path.exists(caminho_origem):
+                print("❌ Erro: falhou ao converter para arquivo mobi")
+                raise
 
-        try:
-            kindle.Stop()
-        except Exception as e:
-            print(f"❌ Erro ao desmontar kinlde: {e}")
-            raise
+            try:
+                shutil.move(caminho_origem, caminho_destino_final)
+                print(
+                    f"✅ Sucesso! O arquivo '{folder_name}.mobi' foi movido para: {caminho_destino_final}"
+                )
+
+            except Exception as e:
+                print(f"❌ Erro ao mover o arquivo: {e}")
+                raise
+
+            try:
+                kindle.Stop()
+            except Exception as e:
+                print(f"❌ Erro ao desmontar kinlde: {e}")
+                raise
 
 
 def join_images_horizontally(
