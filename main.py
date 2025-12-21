@@ -8,23 +8,19 @@ from pathlib import Path
 from typing import Optional
 
 import requests
-
 from PIL import Image
 from selenium import webdriver
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 
 # ==========================================
-URL = "https://mangaplus.shueisha.co.jp/viewer/5000910"
+URL = "https://mangaplus.shueisha.co.jp/viewer/5000834"
 BASE_PATH = Path.home() / "Downloads"
-# FOLDER_NAME = "Chainsaw Man 222"
-# AUTHOR = "Tatsuki Fujimoto"
-# FOLDER_NAME = "One Piece 1167"
-# AUTHOR = "Eichiro Oda"
-FOLDER_NAME = "Jujutsu Kaisen Modulo 15"
-AUTHOR = "Gege Akutami"
+FOLDER_NAME = "Chainsaw Man 223"
+AUTHOR = "Tatsuki Fujimoto"
 # ==========================================
 
 
@@ -136,7 +132,9 @@ def baixar_imagens_blob(url: str, base_path: str, folder_name: str):
     os.makedirs(pasta_destino, exist_ok=True)
 
     options = webdriver.FirefoxOptions()
-    # options.add_argument("--headless")
+    options.add_argument("--headless")
+    options.add_argument("--width=1920")
+    options.add_argument("--height=1080")
     service = Service()
     driver = webdriver.Firefox(service=service, options=options)
 
@@ -151,51 +149,83 @@ def baixar_imagens_blob(url: str, base_path: str, folder_name: str):
         By.CSS_SELECTOR, "p[class^='Viewer-module_pageNumber_'] span"
     )
     text = page_number_p.get_attribute("textContent")
-    total_pages = int(text.split("/")[-1].strip())
+    total_pages = int(text.split("/")[-1].strip()) - 3
 
-    scroll_until_all_images_loaded(driver, total_pages - 4)
+    # scroll_until_all_images_loaded(driver, total_pages - 3)
 
-    fathers = driver.find_elements(
-        By.XPATH,
-        "//div[@class='zao-pages-container'][.//div[@class='zao-image-container']]",
-    )
-
-    if not fathers or len(fathers) == 0:
-        print("⚠️ Nenhuma imagem encontrada.")
-        driver.quit()
-        return
-
-    for index, father in enumerate(fathers, start=1):
-        children = father.find_elements(By.CSS_SELECTOR, ".zao-page")
-        if len(children) == 1:
-            file_name = os.path.join(pasta_destino, f"{index:02}.png")
-            img = children[0].find_element(
-                By.CSS_SELECTOR, ".zao-image-container img.zao-image"
+    for index in range(1, total_pages + 1):
+        try:
+            current_fathers = driver.find_elements(
+                By.XPATH,
+                "//div[@class='zao-pages-container'][.//div[@class='zao-image-container']]",
             )
-            src = img.get_attribute("src")
-            download_img(driver, img, src, file_name, index)
-        else:
-            sub_folder = os.path.join(pasta_destino, f"{index:02}")
-            os.makedirs(sub_folder, exist_ok=True)
-            for new_index, sibling in enumerate(children, start=1):
-                file_name = os.path.join(sub_folder, f"{new_index:02}.png")
-                img = sibling.find_element(
+            tentativas_scroll = 0
+            max_tentativas = 8
+
+            while index > len(current_fathers):
+                print(f"⏳ Aguardando carregamento da página {index}...")
+                driver.find_element(By.TAG_NAME, "body").send_keys(Keys.PAGE_DOWN)
+                time.sleep(1.5)
+                new_fathers = driver.find_elements(
+                    By.XPATH,
+                    "//div[@class='zao-pages-container'][.//div[@class='zao-image-container']]",
+                )
+
+                if len(new_fathers) == len(current_fathers):
+                    tentativas_scroll += 1
+                else:
+                    tentativas_scroll = 0
+
+                current_fathers = new_fathers
+
+                if tentativas_scroll >= max_tentativas:
+                    print(
+                        f"🛑 Fim do conteúdo alcançado na página {len(current_fathers)}. Encerrando downloads."
+                    )
+                    break
+
+            if index > len(current_fathers):
+                break
+            father = current_fathers[index - 1]
+
+            driver.execute_script("arguments[0].scrollIntoView();", father)
+
+            children = father.find_elements(By.CSS_SELECTOR, ".zao-page")
+            if len(children) == 1:
+                file_name = os.path.join(pasta_destino, f"{index:02}.png")
+                img = children[0].find_element(
                     By.CSS_SELECTOR, ".zao-image-container img.zao-image"
                 )
                 src = img.get_attribute("src")
-                download_img(driver, img, src, file_name, new_index)
-            join_images_horizontally(
-                sub_folder,
-                output_folder=pasta_destino,
-                output_filename=f"{index:02}.png",
-            )
+                download_img(driver, img, src, file_name, index)
+            else:
+                sub_folder = os.path.join(pasta_destino, f"{index:02}")
+                os.makedirs(sub_folder, exist_ok=True)
+                for new_index, sibling in enumerate(children, start=1):
+                    file_name = os.path.join(sub_folder, f"{new_index:02}.png")
+                    img = sibling.find_element(
+                        By.CSS_SELECTOR, ".zao-image-container img.zao-image"
+                    )
+                    src = img.get_attribute("src")
+                    download_img(driver, img, src, file_name, new_index)
+                join_images_horizontally(
+                    sub_folder,
+                    output_folder=pasta_destino,
+                    output_filename=f"{index:02}.png",
+                )
+        except StaleElementReferenceException:
+            print(f"⚠️ Elemento da página {index} ficou obsoleto. Tentando recuperar...")
+            time.sleep(2)
+            index -= 1
+            continue
 
     driver.quit()
     print("✅ Todas as imagens foram baixadas com sucesso!")
 
+    generate_mobi(pasta_destino)
+    shutil.rmtree(pasta_destino)
+
     if platform.system() == "Windows":
-        generate_mobi(pasta_destino)
-        shutil.rmtree(pasta_destino)
         kindle = find_kindle_letter("Kindle")
         if kindle:
             kindle_letter = kindle.DeviceID
@@ -261,9 +291,19 @@ def join_images_horizontally(
 
 
 def generate_mobi(folder_path: str):
+    if platform.system() == "Windows":
+        comando = "kcc"
+    else:
+        repo_path = Path.home() / "GitHub/kcc"
+        comando = str(repo_path / ".venv" / "bin" / "kcc-c2e")
+
+    if not os.path.exists(comando) and platform.system() != "Windows":
+        print(f"❌ Erro: Binário do KCC não encontrado em: {comando}")
+        return
+
     subprocess.call(
         [
-            "kcc",
+            comando,
             "-p",
             "K11",
             folder_path,
