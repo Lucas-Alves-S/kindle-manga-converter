@@ -1,0 +1,12 @@
+[project]
+name = "kindle-manga-converter"
+version = "0.0.1"
+dependencies = [
+    "typer",
+]
+
+[project.scripts]
+kmc = "main:app"
+
+[tools.setuptools]
+py-modules = ["main"]
