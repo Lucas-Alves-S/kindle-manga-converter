@@ -23,32 +23,6 @@ def total_pages_loaded(driver):
         return False
 
 
-def scroll_until_all_images_loaded(driver, total_pages):
-    previous_count = 0
-    stable_scrolls = 0
-    max_stable_scrolls = 5
-
-    while True:
-        imagens = driver.find_elements(By.CLASS_NAME, "zao-pages-container")
-        current_count = len(imagens)
-
-        if current_count >= total_pages:
-            break
-
-        if current_count == previous_count:
-            stable_scrolls += 1
-
-        else:
-            stable_scrolls = 0
-
-        if stable_scrolls >= max_stable_scrolls:
-            break
-
-        previous_count = current_count
-        driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ARROW_DOWN)
-        time.sleep(1)
-
-
 def download(url: str, base_path: Path, folder_name: str):
     destiny_folder = os.path.join(base_path, folder_name)
     os.makedirs(destiny_folder, exist_ok=True)
@@ -71,7 +45,7 @@ def download(url: str, base_path: Path, folder_name: str):
         By.CSS_SELECTOR, "p[class^='Viewer-module_pageNumber_'] span"
     )
     text = page_number_p.get_attribute("textContent") or ""
-    total_pages = int(text.split("/")[-1].strip()) - 2
+    total_pages = int(text.split("/")[-1].strip()) - 3
 
     for index in range(1, total_pages + 1):
         try:
@@ -98,6 +72,9 @@ def download(url: str, base_path: Path, folder_name: str):
                 current_fathers = new_fathers
 
                 if tentativas_scroll >= max_tentativas:
+                    print(
+                        f"WARNING - Maximum scrolls reached, {len(current_fathers)} of {total_pages} pages loaded"
+                    )
                     break
 
             if index > len(current_fathers):
