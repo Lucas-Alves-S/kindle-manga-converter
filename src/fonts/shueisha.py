@@ -45,7 +45,7 @@ def download(url: str, base_path: Path, folder_name: str):
         By.CSS_SELECTOR, "p[class^='Viewer-module_pageNumber_'] span"
     )
     text = page_number_p.get_attribute("textContent") or ""
-    total_pages = int(text.split("/")[-1].strip()) - 3
+    total_pages = int(text.split("/")[-1].strip())
 
     for index in range(1, total_pages + 1):
         try:
