@@ -1,0 +1,25 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debugar CLI",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "main",
+            "args": [
+                "-f",
+                "shueisha",
+                "-u",
+                "https://mangaplus.shueisha.co.jp/viewer/5000939",
+                "-n",
+                "Chainsaw Man 228",
+                "-a",
+                "Tatsuki Fujimoto"
+            ],
+            "console": "integratedTerminal"
+        }
+    ]
+}
