@@ -5,7 +5,7 @@ import typer
 
 from commom.converter import generate_mobi
 from commom.system import move_to_kindle
-from fonts.factory import font_factory
+from sources.factory import font_factory
 
 app = typer.Typer()
 
