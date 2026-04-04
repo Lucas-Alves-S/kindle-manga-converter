@@ -9,6 +9,25 @@ from fonts.factory import font_factory
 
 app = typer.Typer()
 
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff"}
+
+
+def skip_pages(folder: Path, count: int):
+    files = sorted(
+        [f for f in folder.iterdir() if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS],
+        key=lambda f: f.name,
+    )
+
+    for f in files[:count]:
+        f.unlink()
+        print(f"INFO - Skipped page: {f.name}")
+
+    remaining = files[count:]
+    for i, f in enumerate(remaining, start=1):
+        new_name = folder / f"{i:03d}{f.suffix}"
+        if f != new_name:
+            f.rename(new_name)
+
 
 @app.command()
 def convert(
@@ -18,6 +37,7 @@ def convert(
     author: Annotated[Optional[str], typer.Option("--author", "-a")] = None,
     download_path: Annotated[Optional[str], typer.Option("--path", "-p")] = None,
     auto_move: Annotated[bool, typer.Option("--auto-move", "-m")] = False,
+    ignore_pages: Annotated[int, typer.Option("--ignore-pages", "-i")] = 0,
 ):
     source = font_factory(font)
     if download_path:
@@ -28,6 +48,9 @@ def convert(
         )
         base_path = Path.home() / "Downloads"
     source(url, base_path, comic_name)
+
+    if ignore_pages > 0:
+        skip_pages(base_path / comic_name, ignore_pages)
 
     full_path = str(base_path / comic_name)
     generate_mobi(full_path, author)
