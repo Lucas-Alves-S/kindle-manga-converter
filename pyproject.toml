@@ -1,12 +1,29 @@
 [project]
 name = "kindle-manga-converter"
 version = "0.0.1"
+requires-python = ">=3.12"
 dependencies = [
+    "attrs",
+    "click",
+    "pillow",
+    "requests",
+    "rich",
+    "selenium",
+    "trio",
+    "trio-websocket",
     "typer",
+    "websocket-client",
 ]
 
 [project.scripts]
 kmc = "main:app"
 
-[tools.setuptools]
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
 py-modules = ["main"]
+
+[tool.setuptools.package-dir]
+"" = "src"
