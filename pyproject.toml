@@ -13,6 +13,7 @@ dependencies = [
     "trio-websocket",
     "typer",
     "websocket-client",
+    "python-dotenv",
 ]
 
 [project.scripts]

@@ -1,25 +1,25 @@
 import os
-import platform
 import shutil
 import subprocess
-from pathlib import Path
 from typing import Optional
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def generate_mobi(folder_path: str, author: Optional[str]):
     print("INFO - Beginning conversion process")
     try:
-        if platform.system() == "Windows":
-            command = "kcc"
+        kcc_path = os.getenv("KCC_PATH")
+        if kcc_path:
+            command = kcc_path
         else:
-            repo_path = Path.home() / "GitHub/kcc"
-            command = str(repo_path / "venv" / "bin" / "kcc-c2e")
+            print("WARNING - KCC_PATH not set in .env, falling back to kcc-c2e from PATH")
+            command = "kcc-c2e"
 
         if not author:
             print("WARNING - No author name provided, falling back to default(kcc)")
-
-        if not os.path.exists(command) and platform.system() != "Windows":
-            raise Exception(f"ERROR - KCC binary not found: {command}")
 
         subprocess.call(
             [

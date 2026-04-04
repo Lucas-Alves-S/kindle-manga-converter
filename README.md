@@ -6,6 +6,7 @@ Downloads manga chapters from supported sources and converts them to `.mobi` for
 
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) — Python package manager
 - Firefox + geckodriver — required for Selenium-based downloaders
+- [KindleComicConverter](https://github.com/ciromattia/kcc) — required to actually convert the files to .mobi format.
 
 ## Setup
 
@@ -13,7 +14,19 @@ Downloads manga chapters from supported sources and converts them to `.mobi` for
 uv sync
 ```
 
-That's it.
+Then copy `.env.example` to `.env` and configure it:
+
+```bash
+cp .env.example .env
+```
+
+### Environment variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `KCC_PATH` | no | Full path to the `kcc-c2e` binary. If not set, `kcc-c2e` will be looked up from `PATH` with a warning. |
+
+`kcc-c2e` is the CLI provided by KindleComicConverter. Install it and either add it to your `PATH` or point `KCC_PATH` to its binary directly.
 
 ## Usage
 
