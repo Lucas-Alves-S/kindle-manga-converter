@@ -11,13 +11,16 @@
             "module": "main",
             "args": [
                 "-f",
-                "shueisha",
+                "cubari",
                 "-u",
-                "https://mangaplus.shueisha.co.jp/viewer/5000939",
+                "https://cubari.moe/read/imgchest/ej7mjklnj7d/1/1/",
                 "-n",
-                "Chainsaw Man 228",
+                "One Piece 1179",
                 "-a",
-                "Tatsuki Fujimoto"
+                "Eichiro Oda",
+                "-i",
+                "2",
+                "-m"
             ],
             "console": "integratedTerminal"
         }
