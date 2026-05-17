@@ -9,7 +9,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 
-from commom.images import download_img, join_images_horizontally
+from common.images import download_img, join_images_horizontally
 
 
 def total_pages_loaded(driver):
