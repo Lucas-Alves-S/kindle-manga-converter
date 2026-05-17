@@ -9,6 +9,7 @@ load_dotenv()
 
 
 def generate_mobi(folder_path: str, author: Optional[str]):
+    """Run kcc-c2e on folder_path and delete source images only on success."""
     print("INFO - Beginning conversion process")
     kcc_path = os.getenv("KCC_PATH")
     if kcc_path:

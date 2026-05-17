@@ -11,6 +11,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 
 def download(url: str, base_path: Path, folder_name: str):
+    """Click the Cubari download button, wait for the ZIP, then extract it into folder_name."""
     destination_folder = base_path / folder_name
     os.makedirs(destination_folder, exist_ok=True)
 

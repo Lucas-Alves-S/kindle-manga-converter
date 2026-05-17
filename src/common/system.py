@@ -38,6 +38,7 @@ def find_kindle_linux(kindle_name):
 
 
 def move_to_kindle(base_path: str, folder_name: str):
+    """Move the generated .mobi to the Kindle's documents folder and unmount the device."""
     print("INFO - Moving file to Kindle")
     system = platform.system()
     origin_path = os.path.join(base_path, f"{folder_name}.mobi")

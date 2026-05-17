@@ -8,6 +8,7 @@ import requests
 
 
 def download_img(driver, img, src, file_name, idx):
+    """Save a page image to file_name, handling blob:, data:image, and plain URL sources."""
     js_blob_to_base64 = """
     const img = arguments[0];
     const callback = arguments[1];
@@ -47,6 +48,7 @@ def download_img(driver, img, src, file_name, idx):
 def join_images_horizontally(
     folder_path, output_folder: Optional[str], output_filename
 ):
+    """Stitch all images in folder_path side-by-side and save to output_folder, then delete folder_path."""
     image_files = [
         os.path.join(folder_path, f)
         for f in os.listdir(folder_path)

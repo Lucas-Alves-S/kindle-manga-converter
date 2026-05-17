@@ -13,6 +13,7 @@ IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff"}
 
 
 def skip_pages(folder: Path, count: int):
+    """Delete the first count images from folder and renumber the remainder from 001."""
     files = sorted(
         [f for f in folder.iterdir() if f.is_file() and f.suffix.lower() in IMAGE_EXTENSIONS],
         key=lambda f: f.name,

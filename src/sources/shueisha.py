@@ -24,6 +24,7 @@ def total_pages_loaded(driver):
 
 
 def download(url: str, base_path: Path, folder_name: str):
+    """Scroll through the Shueisha viewer with headless Firefox and save each page as PNG."""
     destination_folder = os.path.join(base_path, folder_name)
     os.makedirs(destination_folder, exist_ok=True)
 
