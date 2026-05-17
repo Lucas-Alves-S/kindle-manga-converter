@@ -51,11 +51,11 @@ def move_to_kindle(base_path: str, folder_name: str):
             raise Exception("ERROR - Kindle not found")
 
         kindle_letter = kindle.DeviceID
-        destiny_path = os.path.join(kindle_letter, "documents", f"{folder_name}.mobi")
+        destination_path = os.path.join(kindle_letter, "documents", f"{folder_name}.mobi")
 
         try:
-            shutil.move(origin_path, destiny_path)
-            print(f"INFO - File '{folder_name}.mobi' moved to {destiny_path}")
+            shutil.move(origin_path, destination_path)
+            print(f"INFO - File '{folder_name}.mobi' moved to {destination_path}")
         except Exception as e:
             raise Exception(f"ERROR - Failed to move file: {e}")
 
@@ -71,11 +71,11 @@ def move_to_kindle(base_path: str, folder_name: str):
                 "ERROR - Kindle not found, make sure it is connected and mounted"
             )
 
-        destiny_path = os.path.join(kindle_path, "documents", f"{folder_name}.mobi")
+        destination_path = os.path.join(kindle_path, "documents", f"{folder_name}.mobi")
 
         try:
-            shutil.move(origin_path, destiny_path)
-            print(f"INFO - File '{folder_name}.mobi' moved to {destiny_path}")
+            shutil.move(origin_path, destination_path)
+            print(f"INFO - File '{folder_name}.mobi' moved to {destination_path}")
         except Exception as e:
             raise Exception(f"ERROR - Failed to move file: {e}")
 

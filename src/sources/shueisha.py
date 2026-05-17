@@ -24,8 +24,8 @@ def total_pages_loaded(driver):
 
 
 def download(url: str, base_path: Path, folder_name: str):
-    destiny_folder = os.path.join(base_path, folder_name)
-    os.makedirs(destiny_folder, exist_ok=True)
+    destination_folder = os.path.join(base_path, folder_name)
+    os.makedirs(destination_folder, exist_ok=True)
 
     options = webdriver.FirefoxOptions()
     options.add_argument("--headless")
@@ -86,14 +86,14 @@ def download(url: str, base_path: Path, folder_name: str):
 
             children = father.find_elements(By.CSS_SELECTOR, ".zao-page")
             if len(children) == 1:
-                file_name = os.path.join(destiny_folder, f"{index:02}.png")
+                file_name = os.path.join(destination_folder, f"{index:02}.png")
                 img = children[0].find_element(
                     By.CSS_SELECTOR, ".zao-image-container img.zao-image"
                 )
                 src = img.get_attribute("src")
                 download_img(driver, img, src, file_name, index)
             else:
-                sub_folder = os.path.join(destiny_folder, f"{index:02}")
+                sub_folder = os.path.join(destination_folder, f"{index:02}")
                 os.makedirs(sub_folder, exist_ok=True)
                 for new_index, sibling in enumerate(children, start=1):
                     file_name = os.path.join(sub_folder, f"{new_index:02}.png")
@@ -104,7 +104,7 @@ def download(url: str, base_path: Path, folder_name: str):
                     download_img(driver, img, src, file_name, new_index)
                 join_images_horizontally(
                     sub_folder,
-                    output_folder=destiny_folder,
+                    output_folder=destination_folder,
                     output_filename=f"{index:02}.png",
                 )
 

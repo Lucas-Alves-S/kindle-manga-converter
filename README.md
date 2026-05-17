@@ -31,14 +31,14 @@ cp .env.example .env
 ## Usage
 
 ```bash
-uv run kmc convert --font <font> --url <url> --comic-name <name> [options]
+uv run kmc convert --source <source> --url <url> --comic-name <name> [options]
 ```
 
 ### Flags
 
 | Flag | Short | Required | Description |
 |------|-------|----------|-------------|
-| `--font` | `-f` | yes | Download source to use (see [Available Sources](#available-sources)) |
+| `--source` | `-s` | yes | Download source to use (see [Available Sources](#available-sources)) |
 | `--url` | `-u` | yes | URL of the chapter to download |
 | `--comic-name` | `-n` | yes | Name of the folder the chapter will be saved to |
 | `--author` | `-a` | no | Author name embedded in the `.mobi` metadata |
@@ -49,7 +49,7 @@ uv run kmc convert --font <font> --url <url> --comic-name <name> [options]
 ### Example
 
 ```bash
-uv run kmc convert -f shueisha -u "https://..." -n "one-piece-ch1" -a "Oda" -p ~/manga -m
+uv run kmc convert -s shueisha -u "https://..." -n "one-piece-ch1" -a "Oda" -p ~/manga -m
 ```
 
 ## Available Sources

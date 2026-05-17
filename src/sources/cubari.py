@@ -11,8 +11,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 
 def download(url: str, base_path: Path, folder_name: str):
-    destiny_folder = base_path / folder_name
-    os.makedirs(destiny_folder, exist_ok=True)
+    destination_folder = base_path / folder_name
+    os.makedirs(destination_folder, exist_ok=True)
 
     existing_zips = set(base_path.glob("*.zip"))
 
@@ -65,7 +65,7 @@ def download(url: str, base_path: Path, folder_name: str):
 
     print("INFO - Extracting archive...")
     with zipfile.ZipFile(zip_path, "r") as zf:
-        zf.extractall(destiny_folder)
+        zf.extractall(destination_folder)
     os.remove(zip_path)
 
     print("INFO - Download and extraction complete!")

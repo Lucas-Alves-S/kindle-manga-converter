@@ -5,7 +5,7 @@ import typer
 
 from common.converter import generate_mobi
 from common.system import move_to_kindle
-from sources.factory import font_factory
+from sources.factory import source_factory
 
 app = typer.Typer()
 
@@ -31,7 +31,7 @@ def skip_pages(folder: Path, count: int):
 
 @app.command()
 def convert(
-    font: Annotated[str, typer.Option("--font", "-f")],
+    source: Annotated[str, typer.Option("--source", "-s")],
     url: Annotated[str, typer.Option("--url", "-u")],
     comic_name: Annotated[str, typer.Option("--comic-name", "-n")],
     author: Annotated[Optional[str], typer.Option("--author", "-a")] = None,
@@ -39,7 +39,7 @@ def convert(
     auto_move: Annotated[bool, typer.Option("--auto-move", "-m")] = False,
     ignore_pages: Annotated[int, typer.Option("--ignore-pages", "-i")] = 0,
 ):
-    source = font_factory(font)
+    downloader = source_factory(source)
     if download_path:
         base_path = Path(download_path)
     else:
@@ -47,7 +47,7 @@ def convert(
             f"WARNING - No download path provided, falling back to default({Path.home() / 'Downloads'})"
         )
         base_path = Path.home() / "Downloads"
-    source(url, base_path, comic_name)
+    downloader(url, base_path, comic_name)
 
     if ignore_pages > 0:
         skip_pages(base_path / comic_name, ignore_pages)
