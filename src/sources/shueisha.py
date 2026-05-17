@@ -47,7 +47,8 @@ def download(url: str, base_path: Path, folder_name: str):
     text = page_number_p.get_attribute("textContent") or ""
     total_pages = int(text.split("/")[-1].strip())
 
-    for index in range(1, total_pages + 1):
+    index = 1
+    while index <= total_pages:
         try:
             current_fathers = driver.find_elements(
                 By.XPATH,
@@ -106,9 +107,10 @@ def download(url: str, base_path: Path, folder_name: str):
                     output_folder=destiny_folder,
                     output_filename=f"{index:02}.png",
                 )
+
+            index += 1
         except StaleElementReferenceException:
             time.sleep(2)
-            index -= 1
             continue
 
     driver.quit()

@@ -1,6 +1,7 @@
 import os
 import platform
 import shutil
+import subprocess
 
 
 def find_kindle_windows(kindle_name):
@@ -79,9 +80,16 @@ def move_to_kindle(base_path: str, folder_name: str):
             raise Exception(f"ERROR - Failed to move file: {e}")
 
         try:
-            os.system(f"udisksctl unmount -b $(findmnt -n -o SOURCE '{kindle_path}')")
+            result = subprocess.run(
+                ["findmnt", "-n", "-o", "SOURCE", kindle_path],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            device = result.stdout.strip()
+            subprocess.run(["udisksctl", "unmount", "-b", device], check=True)
             print("INFO - Kindle unmounted")
-        except Exception as e:
+        except subprocess.CalledProcessError as e:
             raise Exception(f"ERROR - Failed to unmount Kindle: {e}")
 
     else:

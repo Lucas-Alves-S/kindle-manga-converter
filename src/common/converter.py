@@ -10,18 +10,18 @@ load_dotenv()
 
 def generate_mobi(folder_path: str, author: Optional[str]):
     print("INFO - Beginning conversion process")
+    kcc_path = os.getenv("KCC_PATH")
+    if kcc_path:
+        command = kcc_path
+    else:
+        print("WARNING - KCC_PATH not set in .env, falling back to kcc-c2e from PATH")
+        command = "kcc-c2e"
+
+    if not author:
+        print("WARNING - No author name provided, falling back to default(kcc)")
+
     try:
-        kcc_path = os.getenv("KCC_PATH")
-        if kcc_path:
-            command = kcc_path
-        else:
-            print("WARNING - KCC_PATH not set in .env, falling back to kcc-c2e from PATH")
-            command = "kcc-c2e"
-
-        if not author:
-            print("WARNING - No author name provided, falling back to default(kcc)")
-
-        subprocess.call(
+        subprocess.run(
             [
                 command,
                 "-p",
@@ -40,9 +40,12 @@ def generate_mobi(folder_path: str, author: Optional[str]):
             ],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT,
+            check=True,
         )
-        print("INFO - Conversion complete!")
+    except subprocess.CalledProcessError as e:
+        raise Exception(f"ERROR - KCC conversion failed with exit code {e.returncode}")
     except Exception as e:
         raise Exception(f"ERROR - Check if the comic link is valid - {e}")
-    finally:
-        shutil.rmtree(folder_path)
+
+    print("INFO - Conversion complete!")
+    shutil.rmtree(folder_path)

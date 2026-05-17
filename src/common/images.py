@@ -39,7 +39,7 @@ def download_img(driver, img, src, file_name, idx):
         with open(file_name, "wb") as f:
             f.write(data)
     else:
-        img_data = requests.get(src).content
+        img_data = requests.get(src, timeout=30).content
         with open(file_name, "wb") as f:
             f.write(img_data)
 
@@ -53,7 +53,7 @@ def join_images_horizontally(
         if f.endswith((".png", ".jpg", ".jpeg"))
     ]
 
-    image_files.sort(reverse=True)
+    image_files.sort(reverse=True)  # manga reads right-to-left; descending order joins pages correctly
 
     try:
         images = [Image.open(x) for x in image_files]
