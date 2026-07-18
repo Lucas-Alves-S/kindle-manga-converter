@@ -52,7 +52,9 @@ def move_to_kindle(base_path: str, folder_name: str):
             raise Exception("ERROR - Kindle not found")
 
         kindle_letter = kindle.DeviceID
-        destination_path = os.path.join(kindle_letter, "documents", f"{folder_name}.mobi")
+        destination_path = os.path.join(
+            kindle_letter, "documents", f"{folder_name}.mobi"
+        )
 
         try:
             shutil.move(origin_path, destination_path)
